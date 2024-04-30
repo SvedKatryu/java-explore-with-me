@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.explore_with_me.HitsDto;
 import ru.practicum.explore_with_me.StatsDto;
+import ru.practicum.explore_with_me.error.exeption.BadRequestException;
 import ru.practicum.explore_with_me.error.exeption.ValidationException;
 import ru.practicum.explore_with_me.service.StatsServiceImpl;
 
@@ -20,6 +21,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 @Slf4j
@@ -31,7 +33,7 @@ public class StatsController {
 
     @PostMapping("/hit")
     @ResponseStatus(HttpStatus.CREATED)
-    public HitsDto addStat(@RequestBody @Validated HitsDto hitsDto) {
+    public HitsDto addStat(@RequestBody HitsDto hitsDto) {
         log.info("StatsController uri '{}', request body '{}'.", "/hit", hitsDto);
         return service.addStat(hitsDto);
     }
@@ -45,7 +47,7 @@ public class StatsController {
         LocalDateTime decodedStart = decodeLocalDateTime(start);
         LocalDateTime decodedEnd = decodeLocalDateTime(end);
 
-        log.info("StastController uri '{}', start = '{}', end = '{}', uris = '{}', unique = '{}'.", "/stats", start,
+        log.info("StatsController uri '{}', start = '{}', end = '{}', uris = '{}', unique = '{}'.", "/stats", start,
                 end, uris, unique);
         checkDates(decodedStart, decodedEnd);
         return service.getStats(decodedStart, decodedEnd, uris, unique);
@@ -60,6 +62,10 @@ public class StatsController {
     private LocalDateTime decodeLocalDateTime(String encodedDateTime) {
         String decodedDateTime = URLDecoder.decode(encodedDateTime, StandardCharsets.UTF_8);
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        return LocalDateTime.parse(decodedDateTime, dateTimeFormatter);
+        try {
+            return LocalDateTime.parse(decodedDateTime, dateTimeFormatter);
+        } catch (DateTimeParseException e) {
+            throw new BadRequestException("Incorrect date.");
+        }
     }
 }
