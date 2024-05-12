@@ -34,10 +34,7 @@ public class CategoryPublicController {
     public List<CategoryDto> getAllCategories(@RequestParam(defaultValue = "0") @PositiveOrZero int from,
                                               @RequestParam(defaultValue = "10") @Positive int size) {
         log.info("Response from GET request on {}", "/categories");
-        return categoryService.getAllCategories(fromSizePage(from, size));
+        return categoryService.getAllCategories(PageRequest.of(from / size, size));
     }
 
-    public static PageRequest fromSizePage(int from, int size) {
-        return PageRequest.of(from / size, size);
-    }
 }

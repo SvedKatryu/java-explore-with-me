@@ -50,10 +50,6 @@ public class UserAdminController {
                                   @RequestParam(defaultValue = "0") @PositiveOrZero int from,
                                   @RequestParam(defaultValue = "10") @Positive int size) {
         log.info("Response from GET request on {}", "/admin/users");
-        return userService.getUsers(ids, fromSizePage(from, size));
-    }
-
-    public static PageRequest fromSizePage(int from, int size) {
-        return PageRequest.of(from / size, size);
+        return userService.getUsers(ids, PageRequest.of(from / size, size));
     }
 }

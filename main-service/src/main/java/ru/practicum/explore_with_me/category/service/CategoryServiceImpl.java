@@ -5,12 +5,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.explore_with_me.category.dto.UpdateCategoryDto;
 import ru.practicum.explore_with_me.category.model.Category;
 import ru.practicum.explore_with_me.category.dto.CategoryDto;
 import ru.practicum.explore_with_me.category.dto.NewCategoryDto;
 import ru.practicum.explore_with_me.category.mapper.CategoryMapper;
 import ru.practicum.explore_with_me.category.repository.CategoryRepository;
+import ru.practicum.explore_with_me.error.exeption.ConflictException;
 import ru.practicum.explore_with_me.error.exeption.NotFoundException;
+import ru.practicum.explore_with_me.event.model.Event;
+import ru.practicum.explore_with_me.event.repository.EventRepository;
 
 import java.util.List;
 
@@ -20,6 +24,7 @@ import java.util.List;
 public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
     private final CategoryMapper categoryMapper;
+    private final EventRepository eventRepository;
 
     @Override
     @Transactional
@@ -34,17 +39,21 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     public void deleteCategory(Long catId) {
         log.debug("Deleting category ID{}", catId);
-        getCategoryIfPresent(catId);
+        Category category = getCategoryIfPresent(catId);
+        List<Event> events = eventRepository.findAllByCategoryIs(category);
+        if (!events.isEmpty()) {
+            throw new ConflictException("Can't remove category with exists event");
+        }
         categoryRepository.deleteById(catId);
         log.debug("Category ID{} is deleted", catId);
     }
 
     @Override
     @Transactional
-    public CategoryDto updateCategory(Long catId, NewCategoryDto newCategoryDTO) {
+    public CategoryDto updateCategory(Long catId, UpdateCategoryDto updateCategoryDto) {
         log.debug("Updating category ID{}", catId);
         Category category = getCategoryIfPresent(catId);
-        category.setName(newCategoryDTO.getName());
+        category.setName(updateCategoryDto.getName());
         Category updatedCategory = categoryRepository.save(category);
         log.debug("Category is updated {}", category);
         return categoryMapper.toCategoryDto(updatedCategory);

@@ -342,6 +342,9 @@ public class EventServiceImpl implements EventService {
     }
 
     private Event checkEventBeforeUpdate(Event event, UpdateEventDto updateEventDto) {
+        if (updateEventDto.getEventDate() != null && updateEventDto.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
+            throw new ConflictException("The event can only start in two hours");
+        }
         if (event.getState().equals(EventState.PUBLISHED))
             throw new ConflictException("Published events cannot be changed");
         if (updateEventDto.getAnnotation() != null && !updateEventDto.getAnnotation()

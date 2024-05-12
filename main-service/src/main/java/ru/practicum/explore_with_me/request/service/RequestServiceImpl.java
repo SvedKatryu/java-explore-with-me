@@ -39,6 +39,9 @@ public class RequestServiceImpl implements RequestService {
     @Transactional
     public RequestDto addRequest(Long userId, Long eventId) {
         log.debug("Adding request from user ID{} to event ID{}", userId, eventId);
+        if (requestRepository.existsByEventIdAndRequesterId(eventId, userId)) {
+            throw new ConflictException(String.format("User ID%d already send request on event ID%d", userId, eventId));
+        }
         User user = getUserIfPresent(userId);
         Event event = eventRepository.findById(eventId).orElseThrow(() ->
                 new NotFoundException(String.format("Event ID%d not found", eventId)));
@@ -48,10 +51,6 @@ public class RequestServiceImpl implements RequestService {
         if (!event.getState().equals(EventState.PUBLISHED)) {
             throw new ConflictException(String.format("Event ID%d still not published", eventId));
         }
-        if (requestRepository.existsByEventIdAndRequesterId(eventId, userId)) {
-            throw new ConflictException(String.format("User ID%d already send request on event ID%d", userId, eventId));
-        }
-        List<Request> list = requestRepository.findAll();
         Long confirmedRequests = requestRepository.countByEventIdAndStatus(eventId, CONFIRMED);
         if (event.getParticipantLimit() > 0 && event.getParticipantLimit() <= confirmedRequests) {
             throw new ConflictException("Limit of the participants is already reached");
@@ -79,8 +78,8 @@ public class RequestServiceImpl implements RequestService {
     @Override
     public RequestDto cancelRequest(Long userId, Long requestId) {
         log.debug(String.format("Canceling request ID%d", requestId));
-        getUserIfPresent(userId);
-        Request request = requestRepository.findById(requestId).orElseThrow(() ->
+        User user = getUserIfPresent(userId);
+        Request request = requestRepository.findRequestByRequesterAndId(user, requestId).orElseThrow(() ->
                 new NotFoundException(String.format("Request ID%d doesn't exist", requestId)));
         request.setStatus(CANCELED);
         return requestMapper.toRequestDto(requestRepository.save(request));

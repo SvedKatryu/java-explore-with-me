@@ -33,11 +33,7 @@ public class CompilationPublicController {
                                                 @RequestParam(defaultValue = "0") int from,
                                                 @RequestParam(defaultValue = "10") int size) {
         log.info("Response from POST request on {}", "/admin/compilations");
-        return compilationService.getCompilations(pined, fromSizePage(from, size));
+        return compilationService.getCompilations(pined, PageRequest.of(from / size, size));
     }
 
-    public static PageRequest fromSizePage(int from, int size) {
-        return PageRequest.of(from / size, size);
-
-    }
 }

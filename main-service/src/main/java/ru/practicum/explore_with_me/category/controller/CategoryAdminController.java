@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.explore_with_me.category.dto.CategoryDto;
 import ru.practicum.explore_with_me.category.dto.NewCategoryDto;
+import ru.practicum.explore_with_me.category.dto.UpdateCategoryDto;
 import ru.practicum.explore_with_me.category.service.CategoryService;
 
 import javax.validation.Valid;
@@ -42,9 +43,9 @@ public class CategoryAdminController {
     }
 
     @PatchMapping("/{catId}")
-    public CategoryDto updateCategory(@RequestBody @Valid NewCategoryDto newCategoryDTO,
+    public CategoryDto updateCategory(@RequestBody @Valid UpdateCategoryDto updateCategoryDto,
                                       @PathVariable @Positive Long catId) {
         log.info("Response from PATCH request on {}", "/admin/users");
-        return categoryService.updateCategory(catId, newCategoryDTO);
+        return categoryService.updateCategory(catId, updateCategoryDto);
     }
 }

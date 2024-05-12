@@ -47,11 +47,7 @@ public class EventPublicController {
         if (rangeStart != null && rangeEnd != null && rangeStart.isAfter(rangeEnd))
             throw new ValidationException("The start date cannot be after the end date");
         return eventService.getPublishedEvents(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort,
-                fromSizePage(from, size), request);
-    }
-
-    public static PageRequest fromSizePage(int from, int size) {
-        return PageRequest.of(from / size, size);
+                PageRequest.of(from / size, size), request);
     }
 
     @GetMapping("/{id}")
