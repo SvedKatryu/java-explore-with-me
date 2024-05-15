@@ -40,7 +40,7 @@ public class PrivateCommentController {
     public CommentFullDto updateComment(@RequestBody @Valid NewCommentDto newCommentDto,
                                         @PathVariable @Positive Long userId,
                                         @PathVariable @Positive Long comId) {
-        log.info("Response from PATCH request on {}", "/users/{userId}/comments" + "/{eventId}");
+        log.info("Response from PATCH request on {}", "/users/{userId}/comments" + "/{comId}");
         return commentService.updateComment(newCommentDto, userId, comId);
     }
 
@@ -48,7 +48,7 @@ public class PrivateCommentController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteComment(@PathVariable @Positive Long userId,
                               @PathVariable @Positive Long comId) {
-        log.info("Response from DELETE request on {}", "/users/{userId}/comments" + "/{eventId}");
+        log.info("Response from DELETE request on {}", "/users/{userId}/comments" + "/{comId}");
         commentService.deleteComment(userId, comId);
     }
 }

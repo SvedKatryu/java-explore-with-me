@@ -34,7 +34,7 @@ public class AdminCommentController {
         return commentService.getCommentsByAuthorId(userId, PageRequest.of(from / size, size));
     }
 
-    @DeleteMapping("/admin/comments")
+    @DeleteMapping("/{comId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteComment(@PathVariable @Positive Long comId) {
         log.info("Response from DELETE request on {}", "/admin/comments" + "/{userId}");
