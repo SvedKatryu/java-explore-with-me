@@ -11,6 +11,8 @@ import ru.practicum.explore_with_me.StatsClient;
 import ru.practicum.explore_with_me.StatsDto;
 import ru.practicum.explore_with_me.category.model.Category;
 import ru.practicum.explore_with_me.category.repository.CategoryRepository;
+import ru.practicum.explore_with_me.comments.model.Comment;
+import ru.practicum.explore_with_me.comments.repository.CommentRepository;
 import ru.practicum.explore_with_me.enums.EventSort;
 import ru.practicum.explore_with_me.enums.EventState;
 import ru.practicum.explore_with_me.enums.RequestStatus;
@@ -54,6 +56,7 @@ public class EventServiceImpl implements EventService {
     private final CategoryRepository categoryRepository;
     private final LocationRepository locationRepository;
     private final RequestRepository requestRepository;
+    private final CommentRepository commentRepository;
 
     private final EventMapper eventMapper;
     private final LocationMapper locationMapper;
@@ -99,7 +102,15 @@ public class EventServiceImpl implements EventService {
         List<Event> events = eventRepository.findAllByInitiatorId(userId, pageRequest);
         events = fillWithEventViews(events);
         events = fillWithConfirmedRequests(events);
-        return eventMapper.toEventShortDto(events);
+
+        List<Long> eventIds = events.stream().map(Event::getId).collect(Collectors.toList());
+        Map<Long, List<Comment>> commentsMapByEventId = commentRepository.findAllByEventIdIn(eventIds).stream()
+                .collect(Collectors.groupingBy(c -> c.getEvent().getId()));
+
+        return events.stream()
+                .map(eventMapper::toEventShortDto)
+                .peek(i -> i.setComments(commentsMapByEventId.getOrDefault(i.getId(), new ArrayList<>()).size()))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -210,7 +221,8 @@ public class EventServiceImpl implements EventService {
     public EventFullDto updateEventByAdmin(UpdateEventDto updateEventDto, Long eventId) {
         log.debug(String.format("Updating event ID%d by admin", eventId));
         Event event = checkEventBeforeUpdate(getEvent(eventId), updateEventDto);
-        if (event.getState().equals(EventState.CANCELED)) throw new ConflictException("Not possible to update canceled event");
+        if (event.getState().equals(EventState.CANCELED))
+            throw new ConflictException("Not possible to update canceled event");
         if (updateEventDto.getStateAction() != null) {
             switch (updateEventDto.getStateAction()) {
                 case REJECT_EVENT:
@@ -258,22 +270,35 @@ public class EventServiceImpl implements EventService {
                 .filter(event -> event.getParticipantLimit() > event.getConfirmedRequests())
                 .collect(Collectors.toList()) : events;
         events = fillWithEventViews(events);
-        if (sort == null) return eventMapper.toEventShortDto(events);
+
+        List<Long> eventIds = events.stream().map(Event::getId).collect(Collectors.toList());
+        Map<Long, List<Comment>> commentsMapByEventId = commentRepository.findAllByEventIdIn(eventIds).stream()
+                .collect(Collectors.groupingBy(c -> c.getEvent().getId()));
+
+        if (sort == null) return events.stream()
+                .map(eventMapper::toEventShortDto)
+                .peek(i -> i.setComments(commentsMapByEventId.getOrDefault(i.getId(), new ArrayList<>()).size()))
+                .collect(Collectors.toList());
         switch (sort) {
             case VIEWS:
                 return events
                         .stream()
                         .sorted(Comparator.comparing(Event::getViews))
                         .map(eventMapper::toEventShortDto)
+                        .peek(i -> i.setComments(commentsMapByEventId.getOrDefault(i.getId(), new ArrayList<>()).size()))
                         .collect(Collectors.toList());
             case EVENT_DATE:
                 return events
                         .stream()
                         .sorted(Comparator.comparing(Event::getEventDate))
                         .map(eventMapper::toEventShortDto)
+                        .peek(i -> i.setComments(commentsMapByEventId.getOrDefault(i.getId(), new ArrayList<>()).size()))
                         .collect(Collectors.toList());
             default:
-                return eventMapper.toEventShortDto(events);
+                return events.stream()
+                        .map(eventMapper::toEventShortDto)
+                        .peek(i -> i.setComments(commentsMapByEventId.getOrDefault(i.getId(), new ArrayList<>()).size()))
+                        .collect(Collectors.toList());
         }
     }
 
