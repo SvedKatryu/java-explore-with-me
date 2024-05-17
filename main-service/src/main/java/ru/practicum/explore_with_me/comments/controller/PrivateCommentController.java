@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.explore_with_me.comments.dto.CommentFullDto;
 import ru.practicum.explore_with_me.comments.dto.NewCommentDto;
+import ru.practicum.explore_with_me.comments.dto.UpdateCommentDto;
 import ru.practicum.explore_with_me.comments.service.CommentService;
 
 import javax.validation.Valid;
@@ -27,21 +28,19 @@ import javax.validation.constraints.Positive;
 public class PrivateCommentController {
     private final CommentService commentService;
 
-    @PostMapping("/{eventId}")
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CommentFullDto addComment(@RequestBody @Valid NewCommentDto newCommentDto,
-                                     @PathVariable @Positive Long userId,
-                                     @PathVariable @Positive Long eventId) {
-        log.info("Response from POST request on {}", "/users/{userId}/comments" + "/{eventId}");
-        return commentService.addComment(newCommentDto, userId, eventId);
+                                     @PathVariable @Positive Long userId) {
+        log.info("Response from POST request on {}", "/users/{userId}/comments");
+        return commentService.addComment(newCommentDto, userId);
     }
 
-    @PatchMapping("/{comId}")
-    public CommentFullDto updateComment(@RequestBody @Valid NewCommentDto newCommentDto,
-                                        @PathVariable @Positive Long userId,
-                                        @PathVariable @Positive Long comId) {
-        log.info("Response from PATCH request on {}", "/users/{userId}/comments" + "/{comId}");
-        return commentService.updateComment(newCommentDto, userId, comId);
+    @PatchMapping
+    public CommentFullDto updateComment(@RequestBody @Valid UpdateCommentDto updatedCommentDto,
+                                        @PathVariable @Positive Long userId) {
+        log.info("Response from PATCH request on {}", "/users/{userId}/comments");
+        return commentService.updateComment(updatedCommentDto, userId);
     }
 
     @DeleteMapping("/{comId}")

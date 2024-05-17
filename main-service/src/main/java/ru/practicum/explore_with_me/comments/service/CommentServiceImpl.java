@@ -6,6 +6,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.explore_with_me.comments.dto.UpdateCommentDto;
 import ru.practicum.explore_with_me.comments.model.Comment;
 import ru.practicum.explore_with_me.comments.dto.CommentFullDto;
 import ru.practicum.explore_with_me.comments.dto.CommentShortDto;
@@ -36,14 +37,15 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
-    public CommentFullDto addComment(NewCommentDto newCommentDTO, Long userId, Long eventId) {
-        log.debug("Add comment to event ID{} from user ID{} {}", eventId, userId, newCommentDTO);
+    public CommentFullDto addComment(NewCommentDto newCommentDto, Long userId) {
+        log.debug("Add comment to event ID{} from user ID{} {}", newCommentDto.getEventId(), userId, newCommentDto);
         User user = getUserIfPresent(userId);
-        Event event = getEventIfPresent(eventId);
-        if (!PUBLISHED.equals(event.getState()))
+        Event event = getEventIfPresent(newCommentDto.getEventId());
+        if (!PUBLISHED.equals(event.getState())) {
             throw new ConflictException("You can only add comments to published events");
+        }
         Comment comment = Comment.builder()
-                .text(newCommentDTO.getText())
+                .text(newCommentDto.getText())
                 .author(user)
                 .event(event)
                 .createTime(LocalDateTime.now())
@@ -56,13 +58,14 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
-    public CommentFullDto updateComment(NewCommentDto newCommentDto, Long userId, Long comId) {
-        log.debug("Updating comment ID{} {}", userId, newCommentDto);
+    public CommentFullDto updateComment(UpdateCommentDto updatedCommentDto, Long userId) {
+        log.debug("Updating comment ID{} {}", userId, updatedCommentDto);
         getUserIfPresent(userId);
-        Comment comment = getCommentIfPresent(comId);
-        if (!userId.equals(comment.getAuthor().getId()))
+        Comment comment = getCommentIfPresent(updatedCommentDto.getComId());
+        if (!userId.equals(comment.getAuthor().getId())) {
             throw new ConflictException("Only author can update the comment");
-        comment.setText(newCommentDto.getText());
+        }
+        comment.setText(updatedCommentDto.getText());
         comment.setEditTime(LocalDateTime.now());
         CommentFullDto fullCommentDto = commentMapper.toCommentFullDto(commentRepository.save(comment));
         log.debug("Comment updated {}", fullCommentDto);
